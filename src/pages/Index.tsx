@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FileUploader } from '@/components/FileUploader';
 import { EDIStats } from '@/components/EDIStats';
 import { ContainerTable } from '@/components/ContainerTable';
@@ -6,7 +7,9 @@ import { FileLogCard } from '@/components/FileLogCard';
 import { EDIParser } from '@/utils/ediParser';
 import { ContainerSeal, EDIFileLog } from '@/types/edi';
 import { toast } from 'sonner';
-import { FileCode, Waves } from 'lucide-react';
+import { FileCode, Waves, FileSpreadsheet, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const Index = () => {
   const [fileLog, setFileLog] = useState<Partial<EDIFileLog> | null>(null);
@@ -63,6 +66,43 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Quick Actions */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <FileCode className="h-8 w-8 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-2">EDI File Import</h3>
+                <p className="text-muted-foreground mb-4">
+                  Process purchase order EDI files and extract container information
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 hover:shadow-lg transition-shadow border-2 border-secondary/20">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-secondary/10 rounded-lg">
+                <FileSpreadsheet className="h-8 w-8 text-secondary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-2">CSV/Excel Validation</h3>
+                <p className="text-muted-foreground mb-4">
+                  Upload and validate shipping data with comprehensive error checking
+                </p>
+                <Button asChild variant="default" className="gap-2">
+                  <Link to="/import">
+                    Go to Validator
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+
         {/* File Upload Section */}
         <section>
           <div className="flex items-center gap-2 mb-4">

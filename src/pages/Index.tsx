@@ -55,8 +55,11 @@ const Index = () => {
     }
 
     try {
-      // Prepare data for Excel
-      const excelData = containers.map(container => ({
+      toast.loading('Generating Excel file...', { id: 'excel-gen' });
+
+      // Prepare container data for Excel
+      const containerData = containers.map((container, index) => ({
+        'No.': index + 1,
         'Container Number': container.containerNo,
         'Seal Number': container.sealNumber,
         'Ship Name': container.shipName,
@@ -66,22 +69,45 @@ const Index = () => {
         'Consecutive Number': container.consecNo,
       }));
 
-      // Create workbook and worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
+      // Prepare summary data
+      const summaryData = [
+        { 'Field': 'File Name', 'Value': fileName },
+        { 'Field': 'Total Containers', 'Value': containers.length },
+        { 'Field': 'Total Records', 'Value': totalRecords },
+        { 'Field': 'Total Pallets', 'Value': fileLog?.totalPalletCount || 0 },
+        { 'Field': 'Total Cartons', 'Value': fileLog?.totalCartonCount || 0 },
+        { 'Field': 'Batch Number', 'Value': fileLog?.batchNumber || 'N/A' },
+        { 'Field': 'Date Processed', 'Value': new Date().toLocaleString() },
+      ];
 
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'Containers');
+      // Create workbook and worksheets
+      const wb = XLSX.utils.book_new();
+      
+      // Add Summary sheet
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      wsSummary['!cols'] = [{ wch: 20 }, { wch: 30 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      
+      // Add Containers sheet
+      const wsContainers = XLSX.utils.json_to_sheet(containerData);
+      wsContainers['!cols'] = [
+        { wch: 5 }, { wch: 18 }, { wch: 15 }, { wch: 20 }, 
+        { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 18 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsContainers, 'Containers');
 
       // Generate and download file
-      const excelFileName = `${fileName.replace(/\.[^/.]+$/, '')}_converted.xlsx`;
+      const timestamp = new Date().toISOString().split('T')[0];
+      const excelFileName = `PalletOut_${fileName.replace(/\.[^/.]+$/, '')}_${timestamp}.xlsx`;
       XLSX.writeFile(wb, excelFileName);
 
       toast.success('Excel file generated!', {
+        id: 'excel-gen',
         description: `Downloaded: ${excelFileName}`,
       });
     } catch (error) {
       toast.error('Error generating Excel file', {
+        id: 'excel-gen',
         description: 'Please try again.',
       });
       console.error('Excel generation error:', error);
@@ -156,13 +182,14 @@ const Index = () => {
                   Convert processed EDI files to Excel format for easy sharing
                 </p>
                 <Button 
-                  variant="outline" 
+                  variant="default"
+                  size="lg"
                   className="gap-2"
                   onClick={handleConvertToExcel}
                   disabled={!containers.length}
                 >
                   <Download className="h-4 w-4" />
-                  Convert to Excel
+                  {containers.length ? 'Convert to Excel' : 'No Data to Convert'}
                 </Button>
               </div>
             </div>
@@ -199,6 +226,18 @@ const Index = () => {
 
             {/* Container Table */}
             <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Container Details</h2>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleConvertToExcel}
+                >
+                  <Download className="h-4 w-4" />
+                  Export to Excel
+                </Button>
+              </div>
               <ContainerTable containers={containers} />
             </section>
           </>

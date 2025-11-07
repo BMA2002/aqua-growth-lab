@@ -2,6 +2,7 @@ import { ValidationResult } from '@/types/csv';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -16,15 +17,81 @@ import {
   AlertTriangle, 
   FileX, 
   TableProperties,
-  FileCheck
+  FileCheck,
+  Download
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface ValidationResultsProps {
   result: ValidationResult;
 }
 
 export const ValidationResults = ({ result }: ValidationResultsProps) => {
+  const handleExportToExcel = () => {
+    try {
+      toast.loading('Generating Excel report...', { id: 'excel-export' });
+
+      const wb = XLSX.utils.book_new();
+
+      // Summary sheet
+      const summaryData = [
+        { 'Metric': 'Total Rows', 'Value': result.totalRows },
+        { 'Metric': 'Valid Rows', 'Value': result.validRows },
+        { 'Metric': 'Invalid Rows', 'Value': result.invalidRows },
+        { 'Metric': 'Validation Status', 'Value': result.isValid ? 'PASSED' : 'FAILED' },
+        { 'Metric': 'Missing Columns', 'Value': result.missingColumns.length },
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+      // Missing columns sheet
+      if (result.missingColumns.length > 0) {
+        const missingColsData = result.missingColumns.map((col, idx) => ({
+          'No.': idx + 1,
+          'Missing Column': col
+        }));
+        const wsMissing = XLSX.utils.json_to_sheet(missingColsData);
+        XLSX.utils.book_append_sheet(wb, wsMissing, 'Missing Columns');
+      }
+
+      // Errors sheet
+      if (result.errors.length > 0) {
+        const errorsData = result.errors.map((err, idx) => ({
+          'No.': idx + 1,
+          'Row': err.row,
+          'Column': err.column,
+          'Value': err.value,
+          'Error': err.error
+        }));
+        const wsErrors = XLSX.utils.json_to_sheet(errorsData);
+        wsErrors['!cols'] = [{ wch: 5 }, { wch: 8 }, { wch: 20 }, { wch: 20 }, { wch: 40 }];
+        XLSX.utils.book_append_sheet(wb, wsErrors, 'Errors');
+      }
+
+      // Valid data sheet
+      if (result.data.length > 0) {
+        const wsData = XLSX.utils.json_to_sheet(result.data);
+        XLSX.utils.book_append_sheet(wb, wsData, 'Valid Data');
+      }
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const fileName = `Validation_Report_${timestamp}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success('Excel report generated!', {
+        id: 'excel-export',
+        description: `Downloaded: ${fileName}`,
+      });
+    } catch (error) {
+      toast.error('Error generating Excel report', {
+        id: 'excel-export',
+        description: 'Please try again.',
+      });
+    }
+  };
+
   const errorsByRow = result.errors.reduce((acc, error) => {
     if (!acc[error.row]) {
       acc[error.row] = [];
@@ -35,6 +102,27 @@ export const ValidationResults = ({ result }: ValidationResultsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Header with Export Button */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Validation Results</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Comprehensive analysis of your uploaded file
+            </p>
+          </div>
+          <Button 
+            variant="default"
+            size="lg"
+            className="gap-2"
+            onClick={handleExportToExcel}
+          >
+            <Download className="h-4 w-4" />
+            Export Report
+          </Button>
+        </div>
+      </Card>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">

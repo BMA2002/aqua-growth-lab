@@ -101,7 +101,7 @@ const Index = () => {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 EDI Import System
               </h1>
-              <p className="text-muted-foreground">Purchase Order File Processing</p>
+              <p className="text-muted-foreground">Pallet Out File Processing</p>
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@ const Index = () => {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">EDI File Import</h3>
                 <p className="text-muted-foreground">
-                  Process purchase order EDI files and extract container information
+                  Process pallet out EDI files and extract container information
                 </p>
               </div>
             </div>
@@ -212,7 +212,7 @@ const Index = () => {
             </div>
             <h3 className="text-2xl font-semibold mb-2">No File Loaded</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Upload an EDI file to start processing purchase orders, containers, and shipping information.
+              Upload an EDI file to start processing pallet out files, containers, and shipping information.
             </p>
           </section>
         )}
@@ -221,7 +221,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t mt-16 py-8 bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>EDI Import System - Processing purchase order files efficiently</p>
+          <p>EDI Import System - Processing pallet out files efficiently</p>
         </div>
       </footer>
     </div>

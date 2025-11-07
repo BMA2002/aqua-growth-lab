@@ -88,12 +88,12 @@ export const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
 
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">
-            {uploadStatus === 'success' ? 'File Uploaded Successfully' : 'Drop your EDI file here'}
+            {uploadStatus === 'success' ? 'File Uploaded Successfully' : 'Drop your file here'}
           </h3>
           <p className="text-muted-foreground">
             {uploadStatus === 'success' 
               ? `Processing: ${uploadedFile}`
-              : 'or click to browse files'
+              : 'Supports EDI, TXT, CSV, and DAT files'
             }
           </p>
         </div>
@@ -104,7 +104,7 @@ export const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
               type="file"
               id="file-upload"
               className="hidden"
-              accept=".txt,.dat,.edi"
+              accept=".txt,.dat,.edi,.csv"
               onChange={handleFileSelect}
             />
             <Button asChild size="lg" className="gap-2">

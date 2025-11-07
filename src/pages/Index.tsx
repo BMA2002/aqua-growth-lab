@@ -4,6 +4,7 @@ import { FileUploader } from '@/components/FileUploader';
 import { EDIStats } from '@/components/EDIStats';
 import { ContainerTable } from '@/components/ContainerTable';
 import { FileLogCard } from '@/components/FileLogCard';
+import { TextConverter } from '@/components/TextConverter';
 import { EDIParser } from '@/utils/ediParser';
 import { ContainerSeal, EDIFileLog } from '@/types/edi';
 import { toast } from 'sonner';
@@ -17,8 +18,28 @@ const Index = () => {
   const [containers, setContainers] = useState<ContainerSeal[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [fileName, setFileName] = useState('');
+  const [rawFileContent, setRawFileContent] = useState<string | null>(null);
+  const [isTextFile, setIsTextFile] = useState(false);
 
   const handleFileUpload = (content: string, name: string) => {
+    setRawFileContent(content);
+    setFileName(name);
+
+    // Check if it's a text/CSV file for conversion
+    const fileExtension = name.split('.').pop()?.toLowerCase();
+    if (fileExtension === 'txt' || fileExtension === 'csv') {
+      setIsTextFile(true);
+      setFileLog(null);
+      setContainers([]);
+      setTotalRecords(0);
+      toast.success('Text file loaded!', {
+        description: 'Ready to convert to Excel or CSV format',
+      });
+      return;
+    }
+
+    // Process as EDI file
+    setIsTextFile(false);
     try {
       const parser = new EDIParser();
       const result = parser.parseFile(content);
@@ -33,7 +54,6 @@ const Index = () => {
       
       setContainers(result.containers);
       setTotalRecords(result.records.length);
-      setFileName(name);
 
       toast.success('File processed successfully!', {
         description: `Processed ${result.records.length} records and found ${result.containers.length} containers.`,
@@ -205,6 +225,13 @@ const Index = () => {
           <FileUploader onFileUpload={handleFileUpload} />
         </section>
 
+        {/* Text File Converter */}
+        {isTextFile && rawFileContent && (
+          <section>
+            <TextConverter content={rawFileContent} fileName={fileName} />
+          </section>
+        )}
+
         {/* Results Section */}
         {fileLog && (
           <>
@@ -244,7 +271,7 @@ const Index = () => {
         )}
 
         {/* Empty State */}
-        {!fileLog && (
+        {!fileLog && !isTextFile && (
           <section className="text-center py-16">
             <div className="inline-flex p-6 bg-muted rounded-full mb-4">
               <FileCode className="h-16 w-16 text-muted-foreground" />

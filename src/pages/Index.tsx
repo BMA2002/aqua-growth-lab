@@ -7,9 +7,10 @@ import { FileLogCard } from '@/components/FileLogCard';
 import { EDIParser } from '@/utils/ediParser';
 import { ContainerSeal, EDIFileLog } from '@/types/edi';
 import { toast } from 'sonner';
-import { FileCode, Waves, FileSpreadsheet, ArrowRight } from 'lucide-react';
+import { FileCode, Waves, FileSpreadsheet, ArrowRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import * as XLSX from 'xlsx';
 
 const Index = () => {
   const [fileLog, setFileLog] = useState<Partial<EDIFileLog> | null>(null);
@@ -45,6 +46,48 @@ const Index = () => {
     }
   };
 
+  const handleConvertToExcel = () => {
+    if (!containers.length) {
+      toast.error('No data to export', {
+        description: 'Please upload and process an EDI file first.',
+      });
+      return;
+    }
+
+    try {
+      // Prepare data for Excel
+      const excelData = containers.map(container => ({
+        'Container Number': container.containerNo,
+        'Seal Number': container.sealNumber,
+        'Ship Name': container.shipName,
+        'Voyage Number': container.voyageNo,
+        'Call Sign': container.callSign,
+        'Stuff Date': container.stuffDate,
+        'Consecutive Number': container.consecNo,
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Containers');
+
+      // Generate and download file
+      const excelFileName = `${fileName.replace(/\.[^/.]+$/, '')}_converted.xlsx`;
+      XLSX.writeFile(wb, excelFileName);
+
+      toast.success('Excel file generated!', {
+        description: `Downloaded: ${excelFileName}`,
+      });
+    } catch (error) {
+      toast.error('Error generating Excel file', {
+        description: 'Please try again.',
+      });
+      console.error('Excel generation error:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
       {/* Header */}
@@ -67,7 +110,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Quick Actions */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-primary/10 rounded-lg">
@@ -75,7 +118,7 @@ const Index = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">EDI File Import</h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-muted-foreground">
                   Process purchase order EDI files and extract container information
                 </p>
               </div>
@@ -97,6 +140,29 @@ const Index = () => {
                     Go to Validator
                     <ArrowRight className="h-4 w-4" />
                   </Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 hover:shadow-lg transition-shadow border-2 border-accent/20">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-accent/10 rounded-lg">
+                <Download className="h-8 w-8 text-accent" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-2">PO to Excel Converter</h3>
+                <p className="text-muted-foreground mb-4">
+                  Convert processed EDI files to Excel format for easy sharing
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={handleConvertToExcel}
+                  disabled={!containers.length}
+                >
+                  <Download className="h-4 w-4" />
+                  Convert to Excel
                 </Button>
               </div>
             </div>

@@ -10,12 +10,14 @@ import { EDIParser } from '@/utils/ediParser';
 import { ContainerSeal, EDIFileLog } from '@/types/edi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileCode, Waves, FileSpreadsheet, ArrowRight, Download } from 'lucide-react';
+import { FileCode, Waves, FileSpreadsheet, ArrowRight, Download, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import * as XLSX from 'xlsx';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [fileLog, setFileLog] = useState<Partial<EDIFileLog> | null>(null);
   const [containers, setContainers] = useState<ContainerSeal[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -68,7 +70,6 @@ const Index = () => {
       toast.error('Error processing file', {
         description: 'Please check the file format and try again.',
       });
-      console.error('Parse error:', error);
     }
   };
 
@@ -78,6 +79,11 @@ const Index = () => {
     totalRecords: number,
     log: Partial<EDIFileLog>
   ) => {
+    if (!user) {
+      toast.error('You must be logged in to save data');
+      return;
+    }
+
     try {
       // Insert validation history
       const { data: validation, error: validationError } = await supabase
@@ -91,6 +97,7 @@ const Index = () => {
           total_containers: containers.length,
           total_pallets: log.totalPalletCount || 0,
           total_cartons: log.totalCartonCount || 0,
+          user_id: user.id,
         })
         .select()
         .single();
@@ -101,6 +108,7 @@ const Index = () => {
       if (validation && containers.length > 0) {
         const containerRecords = containers.map((container) => ({
           validation_id: validation.id,
+          user_id: user.id,
           season: container.season,
           location_code: container.locationCode,
           organization: container.organization,
@@ -146,7 +154,7 @@ const Index = () => {
         if (containersError) throw containersError;
       }
     } catch (error) {
-      console.error('Error saving to database:', error);
+      toast.error('Error saving to database');
     }
   };
 
@@ -223,16 +231,22 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-primary to-accent rounded-lg">
-              <Waves className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-r from-primary to-accent rounded-lg">
+                <Waves className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  EDI Import System
+                </h1>
+                <p className="text-muted-foreground">Pallet Out File Processing</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                EDI Import System
-              </h1>
-              <p className="text-muted-foreground">Pallet Out File Processing</p>
-            </div>
+            <Button variant="outline" onClick={signOut} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>

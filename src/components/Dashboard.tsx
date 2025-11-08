@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, CheckCircle, AlertCircle, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface ValidationStats {
   totalValidations: number;
@@ -25,6 +27,7 @@ interface ValidationHistoryItem {
 }
 
 export const Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState<ValidationStats>({
     totalValidations: 0,
     successfulValidations: 0,
@@ -37,17 +40,22 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
 
   const loadDashboardData = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
 
-      // Fetch validation history
+      // Fetch validation history for current user only
       const { data: validations, error: validationsError } = await supabase
         .from('validation_history')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -68,7 +76,7 @@ export const Dashboard = () => {
         setStats(calculatedStats);
       }
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      toast.error('Error loading dashboard data');
     } finally {
       setLoading(false);
     }

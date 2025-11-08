@@ -52,6 +52,7 @@ export type Database = {
           target_market: string | null
           temptale: string | null
           upn: string | null
+          user_id: string | null
           validation_id: string | null
           variety_code: string | null
           voyage_no: string | null
@@ -93,6 +94,7 @@ export type Database = {
           target_market?: string | null
           temptale?: string | null
           upn?: string | null
+          user_id?: string | null
           validation_id?: string | null
           variety_code?: string | null
           voyage_no?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           target_market?: string | null
           temptale?: string | null
           upn?: string | null
+          user_id?: string | null
           validation_id?: string | null
           variety_code?: string | null
           voyage_no?: string | null
@@ -160,6 +163,7 @@ export type Database = {
           total_containers: number | null
           total_pallets: number | null
           total_records: number | null
+          user_id: string | null
           validation_errors: Json | null
         }
         Insert: {
@@ -173,6 +177,7 @@ export type Database = {
           total_containers?: number | null
           total_pallets?: number | null
           total_records?: number | null
+          user_id?: string | null
           validation_errors?: Json | null
         }
         Update: {
@@ -186,6 +191,7 @@ export type Database = {
           total_containers?: number | null
           total_pallets?: number | null
           total_records?: number | null
+          user_id?: string | null
           validation_errors?: Json | null
         }
         Relationships: []

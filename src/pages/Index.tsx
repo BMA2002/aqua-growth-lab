@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAdmin } from '@/hooks/useAdmin';
 import { FileUploader } from '@/components/FileUploader';
 import { EDIStats } from '@/components/EDIStats';
 import { ContainerTable } from '@/components/ContainerTable';
@@ -10,7 +11,7 @@ import { EDIParser } from '@/utils/ediParser';
 import { ContainerSeal, EDIFileLog } from '@/types/edi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileCode, Waves, FileSpreadsheet, ArrowRight, Download, LogOut } from 'lucide-react';
+import { FileCode, Waves, FileSpreadsheet, ArrowRight, Download, LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import * as XLSX from 'xlsx';
@@ -18,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [fileLog, setFileLog] = useState<Partial<EDIFileLog> | null>(null);
   const [containers, setContainers] = useState<ContainerSeal[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -242,10 +244,20 @@ const Index = () => {
                 <p className="text-muted-foreground">Pallet Out File Processing</p>
               </div>
             </div>
-            <Button variant="outline" onClick={signOut} className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Button variant="outline" asChild className="gap-2">
+                  <Link to="/admin">
+                    <Shield className="h-4 w-4" />
+                    Admin Portal
+                  </Link>
+                </Button>
+              )}
+              <Button variant="outline" onClick={signOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>

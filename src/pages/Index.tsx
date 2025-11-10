@@ -222,7 +222,6 @@ const Index = () => {
         id: 'excel-gen',
         description: 'Please try again.',
       });
-      console.error('Excel generation error:', error);
     }
   };
 

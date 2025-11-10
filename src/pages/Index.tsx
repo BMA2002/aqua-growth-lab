@@ -161,7 +161,7 @@ const Index = () => {
   const handleConvertToExcel = () => {
     if (!containers.length) {
       toast.error('No data to export', {
-        description: 'Please upload and process an EDI file first.',
+        description: 'Please upload an EDI file first using the "Upload EDI File" section below.',
       });
       return;
     }
@@ -305,17 +305,19 @@ const Index = () => {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">PO to Excel Converter</h3>
                 <p className="text-muted-foreground mb-4">
-                  Convert processed EDI files to Excel format for easy sharing
+                  {containers.length 
+                    ? `${containers.length} containers ready to export`
+                    : 'Upload an EDI file below to get started'
+                  }
                 </p>
                 <Button 
-                  variant="default"
+                  variant={containers.length ? "default" : "outline"}
                   size="lg"
                   className="gap-2"
                   onClick={handleConvertToExcel}
-                  disabled={!containers.length}
                 >
                   <Download className="h-4 w-4" />
-                  {containers.length ? 'Convert to Excel' : 'No Data to Convert'}
+                  Convert to Excel
                 </Button>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { ValidationResults } from '@/components/ValidationResults';
 import { ValidationResult } from '@/types/csv';
 import { FileSpreadsheet, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BackButton } from '@/components/BackButton';
 
 const Import = () => {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -13,16 +14,19 @@ const Import = () => {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-secondary to-primary rounded-lg">
-              <FileSpreadsheet className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-r from-secondary to-primary rounded-lg">
+                <FileSpreadsheet className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+                  CSV/Excel Import & Validation
+                </h1>
+                <p className="text-muted-foreground">Import and validate shipping data files</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
-                CSV/Excel Import & Validation
-              </h1>
-              <p className="text-muted-foreground">Import and validate shipping data files</p>
-            </div>
+            <BackButton to="/" label="Back to Dashboard" />
           </div>
         </div>
       </header>

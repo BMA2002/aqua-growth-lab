@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
 import { FileUploader } from '@/components/FileUploader';
@@ -26,6 +26,7 @@ const Index = () => {
   const [fileName, setFileName] = useState('');
   const [rawFileContent, setRawFileContent] = useState<string | null>(null);
   const [isTextFile, setIsTextFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (content: string, name: string) => {
     setRawFileContent(content);
@@ -227,6 +228,101 @@ const Index = () => {
     }
   };
 
+  const handleQuickUploadAndConvert = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleQuickFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      toast.loading('Processing file...', { id: 'quick-process' });
+      
+      const content = await file.text();
+      
+      // Process the EDI file
+      const parser = new EDIParser();
+      const result = parser.parseFile(content);
+
+      const log = {
+        ...result.fileLog,
+        fileName: file.name,
+        status: 'completed' as const,
+        createdAt: new Date().toISOString(),
+        id: Date.now().toString(),
+      };
+
+      setFileLog(log);
+      setContainers(result.containers);
+      setTotalRecords(result.records.length);
+      setFileName(file.name);
+      setIsTextFile(false);
+      setRawFileContent(content);
+
+      // Save to database
+      await saveToDatabase(file.name, result.containers, result.records.length, log);
+
+      toast.success('File processed!', {
+        id: 'quick-process',
+        description: `Found ${result.containers.length} containers. Generating Excel...`,
+      });
+
+      // Auto-convert to Excel
+      setTimeout(() => {
+        // Prepare container data for Excel
+        const containerData = result.containers.map((container, index) => ({
+          'No.': index + 1,
+          'Container Number': container.containerNo,
+          'Seal Number': container.sealNumber,
+          'Ship Name': container.shipName,
+          'Voyage Number': container.voyageNo,
+          'Call Sign': container.callSign,
+          'Stuff Date': container.stuffDate,
+          'Consecutive Number': container.consecNo,
+        }));
+
+        const summaryData = [
+          { 'Field': 'File Name', 'Value': file.name },
+          { 'Field': 'Total Containers', 'Value': result.containers.length },
+          { 'Field': 'Total Records', 'Value': result.records.length },
+          { 'Field': 'Total Pallets', 'Value': log.totalPalletCount || 0 },
+          { 'Field': 'Total Cartons', 'Value': log.totalCartonCount || 0 },
+          { 'Field': 'Batch Number', 'Value': log.batchNumber || 'N/A' },
+          { 'Field': 'Date Processed', 'Value': new Date().toLocaleString() },
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+        wsSummary['!cols'] = [{ wch: 20 }, { wch: 30 }];
+        XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+        
+        const wsContainers = XLSX.utils.json_to_sheet(containerData);
+        wsContainers['!cols'] = [
+          { wch: 5 }, { wch: 18 }, { wch: 15 }, { wch: 20 }, 
+          { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 18 }
+        ];
+        XLSX.utils.book_append_sheet(wb, wsContainers, 'Containers');
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        const excelFileName = `PalletOut_${file.name.replace(/\.[^/.]+$/, '')}_${timestamp}.xlsx`;
+        XLSX.writeFile(wb, excelFileName);
+
+        toast.success('Excel file downloaded!', {
+          description: excelFileName,
+        });
+      }, 500);
+    } catch (error) {
+      toast.error('Error processing file', {
+        id: 'quick-process',
+        description: error instanceof Error ? error.message : 'Please check the file format and try again.',
+      });
+    }
+
+    // Reset input
+    event.target.value = '';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
       {/* Header */}
@@ -317,16 +413,20 @@ const Index = () => {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">PO to Excel Converter</h3>
                 <p className="text-muted-foreground mb-4">
-                  {containers.length 
-                    ? `${containers.length} containers ready to export`
-                    : 'Upload an EDI file below to get started'
-                  }
+                  Upload an EDI file below to get started
                 </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".edi,.txt,.dat"
+                  onChange={handleQuickFileChange}
+                  className="hidden"
+                />
                 <Button 
-                  variant={containers.length ? "default" : "outline"}
+                  variant="default"
                   size="lg"
                   className="gap-2"
-                  onClick={handleConvertToExcel}
+                  onClick={handleQuickUploadAndConvert}
                 >
                   <Download className="h-4 w-4" />
                   Convert to Excel
